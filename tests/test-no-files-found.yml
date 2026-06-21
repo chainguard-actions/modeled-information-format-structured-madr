@@ -1,0 +1,60 @@
+name: Test no ADR files found
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/docs/decisions
+          pattern: "**/*.nonexistent"
+          fail-on-error: "true"
+
+      - name: Assert valid output is true (no files = valid)
+        env:
+          ACTUAL: ${{ steps.action.outputs.valid }}
+        run: |
+          echo "actual valid: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected valid=true when no files found, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert total count is zero
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "actual total: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected total=0, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count is zero
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "actual passed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected passed=0, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count is zero
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "actual failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected failed=0, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,41 @@
+name: Test strict mode with valid ADR
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # In strict mode, warnings cause failure. The valid fixture has no warnings,
+      # so the action should still succeed and report valid=true.
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/docs/decisions
+          pattern: "**/*.md"
+          strict: "true"
+          fail-on-error: "true"
+
+      - name: Assert valid output is true
+        env:
+          ACTUAL: ${{ steps.action.outputs.valid }}
+        run: |
+          echo "actual valid: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected valid=true in strict mode with clean ADR, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "actual total: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected total=1, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"

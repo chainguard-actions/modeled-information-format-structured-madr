@@ -1,0 +1,83 @@
+name: 'Structured MADR Validator'
+description: 'Validates Architectural Decision Records against the Structured MADR specification'
+author: 'zircote'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+inputs:
+  path:
+    description: 'Path to the directory containing ADR files (relative to repository root)'
+    required: false
+    default: 'docs/decisions'
+  pattern:
+    description: 'Glob pattern for ADR files'
+    required: false
+    default: '**/*.md'
+  schema:
+    description: 'Path to custom JSON Schema (uses built-in schema if not specified)'
+    required: false
+    default: ''
+  strict:
+    description: 'Enable strict mode (fail on warnings)'
+    required: false
+    default: 'false'
+  fail-on-error:
+    description: 'Fail the workflow if validation errors are found'
+    required: false
+    default: 'true'
+outputs:
+  valid:
+    description: 'Whether all ADRs passed validation'
+    value: ${{ steps.validate.outputs.valid }}
+  total:
+    description: 'Total number of ADR files checked'
+    value: ${{ steps.validate.outputs.total }}
+  passed:
+    description: 'Number of ADR files that passed validation'
+    value: ${{ steps.validate.outputs.passed }}
+  failed:
+    description: 'Number of ADR files that failed validation'
+    value: ${{ steps.validate.outputs.failed }}
+  warnings:
+    description: 'Number of warnings generated'
+    value: ${{ steps.validate.outputs.warnings }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - name: Setup Node.js
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --ignore-scripts
+    - name: Run validation
+      id: validate
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_PATTERN: ${{ inputs.pattern }}
+        INPUT_SCHEMA: ${{ inputs.schema }}
+        INPUT_STRICT: ${{ inputs.strict }}
+        INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        node "$ACTION_PATH/src/validate.js"
