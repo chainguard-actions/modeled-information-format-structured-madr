@@ -1,0 +1,60 @@
+name: Test invalid ADR detected with fail-on-error false
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/invalid-adrs
+          pattern: "**/*.md"
+          fail-on-error: "false"
+
+      - name: Assert valid is false for invalid ADR
+        env:
+          ACTUAL: ${{ steps.action.outputs.valid }}
+        run: |
+          echo "actual valid: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected valid=false for invalid ADR, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: valid=false"
+
+      - name: Assert total is 1
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "actual total: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected total=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: total=1"
+
+      - name: Assert failed is 1 for invalid ADR
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "actual failed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected failed=1 for invalid ADR, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: failed=1"
+
+      - name: Assert passed is 0 for invalid ADR
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "actual passed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected passed=0 for invalid ADR, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: passed=0"

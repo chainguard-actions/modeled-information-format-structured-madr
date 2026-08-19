@@ -1,0 +1,68 @@
+name: Test warnings output is reported
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/warning-adrs
+          pattern: "**/*.md"
+          strict: "false"
+          fail-on-error: "false"
+
+      - name: Assert valid output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.valid }}
+        run: |
+          echo "actual valid: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected valid output to be set"
+            exit 1
+          fi
+          echo "PASS: valid output is set to '$ACTUAL'"
+
+      - name: Assert total is 1
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "actual total: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected total=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: total=1"
+
+      - name: Assert warnings output is a non-negative integer
+        env:
+          ACTUAL: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "actual warnings: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected warnings output to be set"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]+$'; then
+            echo "FAIL: expected warnings to be a non-negative integer, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: warnings='$ACTUAL' is a valid non-negative integer"
+
+      - name: Assert passed plus failed equals total
+        env:
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "passed: $PASSED, failed: $FAILED, total: $TOTAL"
+          SUM=$((PASSED + FAILED))
+          if [ "$SUM" != "$TOTAL" ]; then
+            echo "FAIL: passed ($PASSED) + failed ($FAILED) = $SUM != total ($TOTAL)"
+            exit 1
+          fi
+          echo "PASS: passed + failed = total"

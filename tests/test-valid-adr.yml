@@ -1,4 +1,4 @@
-name: Test valid ADR validation
+name: Test valid ADR passes validation
 on:
   workflow_dispatch:
 
@@ -11,50 +11,50 @@ jobs:
       - id: action
         uses: .
         with:
-          path: tests/fixtures/docs/decisions
+          path: tests/fixtures/valid-adrs
           pattern: "**/*.md"
           fail-on-error: "true"
 
-      - name: Assert valid output is true
+      - name: Assert valid is true
         env:
           ACTUAL: ${{ steps.action.outputs.valid }}
         run: |
           echo "actual valid: $ACTUAL"
           if [ "$ACTUAL" != "true" ]; then
-            echo "FAIL: expected valid=true, got $ACTUAL"
+            echo "FAIL: expected valid=true but got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: valid=true"
 
-      - name: Assert total count
+      - name: Assert total is 1
         env:
           ACTUAL: ${{ steps.action.outputs.total }}
         run: |
           echo "actual total: $ACTUAL"
           if [ "$ACTUAL" != "1" ]; then
-            echo "FAIL: expected total=1, got $ACTUAL"
+            echo "FAIL: expected total=1 but got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: total=1"
 
-      - name: Assert passed count
+      - name: Assert passed is 1
         env:
           ACTUAL: ${{ steps.action.outputs.passed }}
         run: |
           echo "actual passed: $ACTUAL"
           if [ "$ACTUAL" != "1" ]; then
-            echo "FAIL: expected passed=1, got $ACTUAL"
+            echo "FAIL: expected passed=1 but got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: passed=1"
 
-      - name: Assert failed count
+      - name: Assert failed is 0
         env:
           ACTUAL: ${{ steps.action.outputs.failed }}
         run: |
           echo "actual failed: $ACTUAL"
           if [ "$ACTUAL" != "0" ]; then
-            echo "FAIL: expected failed=0, got $ACTUAL"
+            echo "FAIL: expected failed=0 but got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: failed=0"

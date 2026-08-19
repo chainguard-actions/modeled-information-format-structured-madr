@@ -11,50 +11,50 @@ jobs:
       - id: action
         uses: .
         with:
-          path: tests/fixtures/docs/decisions
-          pattern: "**/*.nonexistent"
+          path: tests/fixtures/empty-adrs
+          pattern: "**/*.md"
           fail-on-error: "true"
 
-      - name: Assert valid output is true (no files = valid)
+      - name: Assert valid is true when no files found
         env:
           ACTUAL: ${{ steps.action.outputs.valid }}
         run: |
           echo "actual valid: $ACTUAL"
           if [ "$ACTUAL" != "true" ]; then
-            echo "FAIL: expected valid=true when no files found, got $ACTUAL"
+            echo "FAIL: expected valid=true when no files found, got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: valid=true"
 
-      - name: Assert total count is zero
+      - name: Assert total is 0 when no files found
         env:
           ACTUAL: ${{ steps.action.outputs.total }}
         run: |
           echo "actual total: $ACTUAL"
           if [ "$ACTUAL" != "0" ]; then
-            echo "FAIL: expected total=0, got $ACTUAL"
+            echo "FAIL: expected total=0 when no files found, got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: total=0"
 
-      - name: Assert passed count is zero
+      - name: Assert passed is 0 when no files found
         env:
           ACTUAL: ${{ steps.action.outputs.passed }}
         run: |
           echo "actual passed: $ACTUAL"
           if [ "$ACTUAL" != "0" ]; then
-            echo "FAIL: expected passed=0, got $ACTUAL"
+            echo "FAIL: expected passed=0 when no files found, got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: passed=0"
 
-      - name: Assert failed count is zero
+      - name: Assert failed is 0 when no files found
         env:
           ACTUAL: ${{ steps.action.outputs.failed }}
         run: |
           echo "actual failed: $ACTUAL"
           if [ "$ACTUAL" != "0" ]; then
-            echo "FAIL: expected failed=0, got $ACTUAL"
+            echo "FAIL: expected failed=0 when no files found, got '$ACTUAL'"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: failed=0"
