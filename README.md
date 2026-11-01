@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/zircote-structured-madr/tree/v1.2.0) | [`1885ace`](https://github.com/zircote/structured-madr/commit/1885ace5d825e2b2982505e28468dd4f5ba1d1c0) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/zircote-structured-madr/tree/v1.2.0) | [`1885ace`](https://github.com/zircote/structured-madr/commit/1885ace5d825e2b2982505e28468dd4f5ba1d1c0) | [`HARDENING.md`](https://github.com/chainguard-actions/zircote-structured-madr/blob/v1.2.0/HARDENING.md) |
 
 ## Privacy
 
