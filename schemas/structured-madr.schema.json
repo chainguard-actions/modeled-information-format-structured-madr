@@ -1,0 +1,199 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://smadr.dev/schemas/structured-madr.schema.json",
+  "title": "Structured MADR Frontmatter",
+  "description": "JSON Schema for validating Structured MADR YAML frontmatter",
+  "type": "object",
+  "required": [
+    "title",
+    "description",
+    "type",
+    "category",
+    "tags",
+    "status",
+    "created",
+    "updated",
+    "author",
+    "project"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short descriptive title for the decision",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["Use PostgreSQL for Primary Storage"]
+    },
+    "description": {
+      "type": "string",
+      "description": "One-sentence summary of the decision",
+      "minLength": 1,
+      "maxLength": 300,
+      "examples": ["Decision to adopt PostgreSQL as the primary database for the application"]
+    },
+    "type": {
+      "type": "string",
+      "description": "Document type identifier",
+      "const": "adr"
+    },
+    "category": {
+      "type": "string",
+      "description": "The category of decision",
+      "minLength": 1,
+      "examples": ["architecture", "api", "security", "performance", "infrastructure", "migration", "integration", "data", "testing"]
+    },
+    "tags": {
+      "type": "array",
+      "description": "Keywords for categorization and search",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$"
+      },
+      "uniqueItems": true,
+      "examples": [["database", "postgresql", "storage"]]
+    },
+    "status": {
+      "type": "string",
+      "description": "Current status of the decision",
+      "enum": ["proposed", "accepted", "deprecated", "superseded"]
+    },
+    "created": {
+      "type": "string",
+      "description": "Date the ADR was created (ISO 8601)",
+      "format": "date",
+      "examples": ["2025-01-15"]
+    },
+    "updated": {
+      "type": "string",
+      "description": "Date the ADR was last modified (ISO 8601)",
+      "format": "date",
+      "examples": ["2025-01-20"]
+    },
+    "author": {
+      "type": "string",
+      "description": "The author or team responsible for the decision",
+      "minLength": 1,
+      "examples": ["Architecture Team", "Jane Doe"]
+    },
+    "project": {
+      "type": "string",
+      "description": "The project this decision applies to",
+      "minLength": 1,
+      "examples": ["my-application", "subcog"]
+    },
+    "technologies": {
+      "type": "array",
+      "description": "Technologies referenced or affected by this decision",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["postgresql", "rust", "tokio"]]
+    },
+    "audience": {
+      "type": "array",
+      "description": "Intended readers of this ADR",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "examples": [["developers", "architects"]]
+    },
+    "related": {
+      "type": "array",
+      "description": "Filenames of related ADRs",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+\\.md$"
+      },
+      "uniqueItems": true,
+      "examples": [["adr_0001.md", "adr_0005.md"]]
+    },
+    "x-superseded-by": {
+      "type": "string",
+      "description": "MIF: filename of the ADR that supersedes this one. Projected to a MIF 'supersedes' relationship. Use when status is 'superseded'.",
+      "pattern": "^[a-zA-Z0-9_-]+\\.md$"
+    },
+    "id": {
+      "type": "string",
+      "description": "MIF: stable identifier for this decision (UUID or slug). A UUID is used as the concept id; a slug, or no id, becomes a deterministic UUIDv5 of smadr:<project>:<id-or-file-slug> in the MIF namespace, giving urn:mif:<uuid>.",
+      "minLength": 1
+    },
+    "conceptType": {
+      "type": "string",
+      "description": "MIF: cognitive-triad type. ADRs are semantic (knowledge). Distinct from the MADR 'type' (const 'adr').",
+      "enum": ["semantic", "episodic", "procedural"],
+      "default": "semantic"
+    },
+    "namespace": {
+      "type": "string",
+      "description": "MIF: hierarchical namespace. If absent, derived as _semantic/decisions/<category-slug>.",
+      "pattern": "^[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*$"
+    },
+    "summary": {
+      "type": "string",
+      "description": "MIF (L3): short summary. If absent, the projector uses 'description'.",
+      "minLength": 1
+    },
+    "relationships": {
+      "type": "array",
+      "description": "MIF (L2): typed relationships {type (kebab-case), target}. Usually derived from 'related'/'x-superseded-by'; author overrides accepted. Deep-validated against the MIF schema after projection.",
+      "items": {
+        "type": "object",
+        "required": ["type", "target"],
+        "properties": {
+          "type": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*(:[a-z0-9][a-z0-9-]*)?$" },
+          "target": { "type": "string" },
+          "strength": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "description": "MIF (L2): EntityReferences. Usually derived from 'technologies'; author overrides accepted. Deep-validated against the MIF schema after projection.",
+      "items": { "type": "object" }
+    },
+    "temporal": {
+      "type": "object",
+      "description": "MIF (L2/L3): temporal metadata. Usually derived from created/updated/status; deep-validated after projection."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "MIF (L3): W3C-PROV provenance. Usually derived from author/project; deep-validated after projection."
+    },
+    "citations": {
+      "type": "array",
+      "description": "MIF (L3): citations. Usually extracted from body Links; author overrides accepted. Deep-validated after projection.",
+      "items": { "type": "object" }
+    }
+  },
+  "additionalProperties": {
+    "description": "Custom extension fields should be prefixed with 'x-'",
+    "if": {
+      "propertyNames": {
+        "pattern": "^x-"
+      }
+    }
+  },
+  "examples": [
+    {
+      "title": "Use PostgreSQL for Primary Storage",
+      "description": "Decision to adopt PostgreSQL as the primary database for the application",
+      "type": "adr",
+      "category": "architecture",
+      "tags": ["database", "postgresql", "storage"],
+      "status": "accepted",
+      "created": "2025-01-15",
+      "updated": "2025-01-20",
+      "author": "Architecture Team",
+      "project": "my-application",
+      "technologies": ["postgresql", "rust"],
+      "audience": ["developers", "architects"],
+      "related": ["adr_0001.md"]
+    }
+  ]
+}

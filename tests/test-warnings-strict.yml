@@ -1,0 +1,29 @@
+name: Test warnings with strict mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/warnings
+          strict: 'true'
+          fail-on-error: 'false'
+      - name: Assert strict mode marks warnings invalid
+        env:
+          VALID: ${{ steps.action.outputs.valid }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+          WARNINGS: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "valid=$VALID passed=$PASSED failed=$FAILED warnings=$WARNINGS"
+          [ "$VALID" = "false" ] || { echo "FAIL: valid should be false in strict mode"; exit 1; }
+          [ "$PASSED" = "1" ] || { echo "FAIL: passed should be 1"; exit 1; }
+          [ "$FAILED" = "0" ] || { echo "FAIL: failed should be 0"; exit 1; }
+          if [ -z "$WARNINGS" ] || [ "$WARNINGS" -lt 1 ]; then
+            echo "FAIL: expected at least 1 warning"; exit 1
+          fi
+          echo "PASS"

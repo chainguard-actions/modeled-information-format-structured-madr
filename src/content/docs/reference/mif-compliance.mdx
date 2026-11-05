@@ -1,0 +1,113 @@
+---
+title: MIF Compliance
+description: Validate structured-MADR ADRs as MIF (Modeled Information Format) at a user-selected conformance level.
+---
+
+structured-MADR ADRs can be validated as **MIF (Modeled Information Format)** at a
+level you select. The markdown stays canonical; a MIF JSON-LD object is **derived**
+from each ADR's frontmatter and body and validated against the chosen level. You do
+not write JSON-LD — you fill frontmatter, and the projector assembles and checks it.
+
+The capability ships as a self-contained Claude Code plugin homed at `.github/`
+(its root holds `.claude-plugin/plugin.json`, `commands/`, `agents/`, `skills/`, and
+`hooks/`), with vendored, checksum-pinned MIF schemas. The repository is also a plugin
+marketplace (`.claude-plugin/marketplace.json`), so the plugin is installable.
+
+## Use it as a Claude Code plugin
+
+The `mif-compliance` skill, the `/mif-validate` and `/mif-project` commands, the
+`adr-mif-author` agent, and an authoring-time `PostToolUse` hook load once the plugin
+is installed:
+
+```text
+/plugin marketplace add modeled-information-format/structured-madr
+/plugin install structured-madr-mif@structured-madr
+```
+
+Contributors who clone this repository are prompted to enable it automatically once
+they trust the folder — `.claude/settings.json` registers the marketplace and enables
+the plugin at project scope. The PostToolUse hook is advisory (it warns, it does not
+block) unless `MIF_HOOK_STRICT=1` is set.
+
+## Select the level
+
+Edit the one config file, `.github/config.yml`:
+
+```yaml
+version: 1.0.0
+mifVersion: 1.4.2
+mifConformanceLevel: 2   # 1 (core) | 2 (standard, default) | 3 (full)
+adrPath: docs/decisions
+ontologies:
+  - id: structured-madr
+    enabled: false
+extensions: []
+```
+
+| Level | Adds (always-derivable) | Optional (validated only when present) |
+|-------|-------------------------|----------------------------------------|
+| **1 — Core** | `@id` (`urn:mif:<uuid>`), `conceptType`, `content` (body), `created`, `title` | — |
+| **2 — Standard** | `namespace`, `modified`, `temporal` | `relationships`, `entities` |
+| **3 — Full** | `provenance`, `temporal.validFrom` | `citations`, `extensions`, `summary` |
+
+A sparse ADR (no `technologies`, no `related`) still passes every level — optional
+collections are validated only when present.
+
+## How frontmatter maps to MIF
+
+| Frontmatter | MIF field |
+|-------------|-----------|
+| `title`, `created`, `updated`, `description`, `tags` | `title`, `created`, `modified`, `summary`, `tags` |
+| `category` | `namespace` = `_semantic/decisions/<category-slug>` |
+| `technologies` | `entities[]` (EntityReference, `Technology`) |
+| `related` | `relationships[] {type: relates-to, target: /decisions/<file>}` |
+| `x-superseded-by` | `relationships[] {type: supersedes, target: /decisions/<file>}` |
+| `author`, `project` | `provenance` (`sourceType: user_explicit`) |
+| body `[label](https://…)` | `citations[]` (Level 3) |
+
+You may also author MIF-native keys (`conceptType`, `namespace`, `relationships`,
+`entities`, `temporal`, `provenance`, `citations`, `id`) directly in frontmatter to
+override the derivation; they are deep-validated against the MIF schema after projection.
+
+## Run the gate
+
+```bash
+npm run validate:mif                 # uses .github/config.yml
+npm run validate:mif -- --level 3    # override the level
+```
+
+The gate is fail-closed at the configured level and emits GitHub annotations naming
+any missing or invalid MIF field.
+
+## In CI / downstream
+
+The composite GitHub Action exposes a `mode: mif`, so any repository can validate its
+ADRs as MIF from the same Action it already uses (see [GitHub Action](/reference/github-action/)):
+
+```yaml
+- uses: modeled-information-format/structured-madr@v2
+  with:
+    mode: mif
+    path: docs/decisions
+    # mif-level: 3      # optional override
+```
+
+## Concept ids
+
+MIF 1.4.0+ requires a concept `@id` of the form `urn:mif:<uuid>`. The projector
+uses an ADR's frontmatter `id` as is (lowercased) when it already holds a UUID
+(bare, `urn:mif:`, `urn:uuid:` or `{…}`). Otherwise (a slug, a legacy
+`urn:mif:smadr:…` id, or no `id`) it derives a deterministic UUIDv5 of the id
+the pre-1.4 projector emitted, `smadr:<project>:<id-or-file-slug>`, in the MIF
+namespace `uuid5(NAMESPACE_URL, "https://mif-spec.dev")`. Re-projecting an ADR
+keeps its `@id`, and the replaced id is kept in `aliases`. The gate fails when
+two ADRs project to the same `@id`, and warns when `config.yml`'s `mifVersion`
+differs from the MIF release this Action vendors.
+
+## Vendored schemas
+
+`.github/schema/` is vendored verbatim from the immutable MIF 1.4.2 release mirror
+(`https://mif-spec.dev/schema/1.4.2/`);
+`.github/VENDOR.lock` pins `mifSpecVersion` and a per-file SHA-256, and
+`config.yml`'s `mifVersion` must match it. A `vendor-check` CI gate fails if any vendored
+file drifts. Do not hand-edit vendored schemas — re-vendor and regenerate the lock.

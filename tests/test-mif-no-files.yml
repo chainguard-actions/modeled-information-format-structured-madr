@@ -1,0 +1,33 @@
+name: Test MIF mode fails closed when no ADRs match
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          mode: mif
+          mif-level: '1'
+          mif-config: tests/fixtures/no-such-config.yml
+          path: tests/fixtures/does-not-exist
+      - name: Assert fail-closed behavior
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          MIF_VALID: ${{ steps.action.outputs.mif-valid }}
+          MIF_TOTAL: ${{ steps.action.outputs.mif-total }}
+          SMADR_VALID: ${{ steps.action.outputs.valid }}
+        run: |
+          echo "outcome=$OUTCOME mif-valid=$MIF_VALID mif-total=$MIF_TOTAL valid=$SMADR_VALID"
+          [ "$OUTCOME" = "failure" ] || { echo "FAIL: expected failure outcome"; exit 1; }
+          if [ -n "$MIF_VALID" ] && [ "$MIF_VALID" != "false" ]; then
+            echo "FAIL: mif-valid should be false"; exit 1
+          fi
+          if [ -n "$MIF_TOTAL" ] && [ "$MIF_TOTAL" != "0" ]; then
+            echo "FAIL: mif-total should be 0"; exit 1
+          fi
+          [ -z "$SMADR_VALID" ] || { echo "FAIL: smadr validate step should not run in mif mode"; exit 1; }
+          echo "PASS"

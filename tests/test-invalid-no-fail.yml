@@ -1,0 +1,26 @@
+name: Test invalid ADR with fail-on-error false
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/invalid
+          fail-on-error: 'false'
+      - name: Assert outputs report failure
+        env:
+          VALID: ${{ steps.action.outputs.valid }}
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "valid=$VALID total=$TOTAL passed=$PASSED failed=$FAILED"
+          [ "$VALID" = "false" ] || { echo "FAIL: valid should be false"; exit 1; }
+          [ "$TOTAL" = "1" ] || { echo "FAIL: total should be 1"; exit 1; }
+          [ "$PASSED" = "0" ] || { echo "FAIL: passed should be 0"; exit 1; }
+          [ "$FAILED" = "1" ] || { echo "FAIL: failed should be 1"; exit 1; }
+          echo "PASS"

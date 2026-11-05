@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 }
+  },
+  "body": {
+    "sections": ["Context", "Decision"],
+    "title_pattern": "^RFC: (.+)$",
+    "subsections": {},
+    "require_option_headings": false
+  }
+}
